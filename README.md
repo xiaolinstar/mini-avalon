@@ -14,26 +14,23 @@
 
 ## 🚀 快速启动
 
-### 1. 环境准备
-- Python 3.12+
-- MySQL 8.4
-- Redis 7.4
-- Docker & Docker Compose (可选)
-
-### 2. 配置
-复制 `.env.example` 并重命名为 `.env`，填入您的微信 Token 及数据库连接信息：
-```ini
-SECRET_KEY=dev-key
-WECHAT_TOKEN=your_token
-WECHAT_APPID=your_appid
-WECHAT_AES_KEY=your_aes_key
-REDIS_URL=redis://localhost:6379/0
-DATABASE_URL=mysql+pymysql://user:password@localhost/avalon_db
+### 1. 启动基础设施 (MySQL & Redis)
+推荐使用 Docker Compose 一键启动本地开发所需的数据库和缓存：
+```bash
+docker-compose up -d
 ```
+
+### 2. 配置环境
+根据不同环境设置 `APP_ENV`（默认为 `dev`）。系统会自动加载对应的 `.env.{APP_ENV}` 文件：
+- **开发**: `export APP_ENV=dev` (使用本地 MySQL/Redis)
+- **测试**: `export APP_ENV=test` (使用内存 SQLite，运行测试会自动切换)
 
 ### 3. 安装依赖并运行
 ```bash
+# 安装依赖
 ./.venv/bin/pip install -r requirements.txt
+
+# 启动应用
 ./.venv/bin/python main.py
 ```
 

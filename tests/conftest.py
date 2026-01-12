@@ -5,6 +5,9 @@ import sys
 # 将 src 加入路径，方便导入
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Set environment to test
+os.environ["APP_ENV"] = "test"
+
 @pytest.fixture
 def app():
     """Create and configure a new app instance for each test."""

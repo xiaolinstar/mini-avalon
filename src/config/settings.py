@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = "TEXT"  # TEXT or JSON
     LOG_FILE: Optional[str] = None
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # Env
+    APP_ENV: str = "dev"
+
+    model_config = SettingsConfigDict(
+        env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
+        env_file_encoding="utf-8", 
+        extra="ignore"
+    )
 
 settings = Settings()
