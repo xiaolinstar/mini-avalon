@@ -1,6 +1,5 @@
-import pytest
 from src.services.game_service import game_service
-from src.fsm.avalon_fsm import AvalonFSM
+
 
 def test_assign_roles(app):
     with app.app_context():

@@ -6,11 +6,16 @@
 __pycache__/
 *.log
 
+# Migrations
+migrations/__pycache__/
+migrations/versions/__pycache__/
+
 # Environments
 .env
 .venv/
 venv/
 env/
+.env.*
 
 # Testing
 .pytest_cache/

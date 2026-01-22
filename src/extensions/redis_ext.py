@@ -1,5 +1,5 @@
 from redis import Redis
-from flask import Flask
+
 
 class RedisExtension:
     def __init__(self, app=None):

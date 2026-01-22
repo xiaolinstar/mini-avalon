@@ -1,7 +1,7 @@
 import re
-from typing import Optional
-from src.wechat.commands import Command, CommandType
+
 from src.utils.logger import get_logger
+from src.wechat.commands import Command, CommandType
 
 logger = get_logger(__name__)
 

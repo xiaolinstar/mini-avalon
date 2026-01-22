@@ -1,7 +1,11 @@
+from datetime import UTC
+
 import pytest
-from src.services.room_service import room_service
+
+from src.exceptions.room import RoomFullError, RoomNotFoundError
 from src.repositories.user_repository import user_repo
-from src.exceptions.room import RoomNotFoundError, RoomFullError
+from src.services.room_service import room_service
+
 
 def test_room_lifecycle(app):
     with app.app_context():
@@ -39,14 +43,15 @@ def test_join_full_room(app):
 
 def test_cleanup_stale_rooms(app):
     with app.app_context():
-        from src.models.sql_models import Room
         from datetime import datetime, timedelta
+
         from src.app_factory import db
+        from src.models.sql_models import Room
         
         # Create a stale room
         user_repo.create_or_update("u1")
         room = room_service.create_room("u1")
-        room.updated_at = datetime.utcnow() - timedelta(hours=3)
+        room.updated_at = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=3)
         db.session.commit()
         
         count = room_service.cleanup_stale_rooms(hours=2)

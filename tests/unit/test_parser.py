@@ -1,5 +1,6 @@
-from src.wechat.parser import parser
 from src.wechat.commands import CommandType
+from src.wechat.parser import parser
+
 
 def test_parse_create_room():
     cmd = parser.parse("建房", "user1")

@@ -1,6 +1,9 @@
-from datetime import datetime
-from src.app_factory import db
+from datetime import UTC, datetime
+
 from sqlalchemy.dialects.mysql import JSON
+
+from src.app_factory import db
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -8,7 +11,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     openid = db.Column(db.String(64), unique=True, nullable=False, index=True)
     nickname = db.Column(db.String(64))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     total_games = db.Column(db.Integer, default=0)
     wins_good = db.Column(db.Integer, default=0)
     wins_evil = db.Column(db.Integer, default=0)
@@ -24,8 +27,8 @@ class Room(db.Model):
     room_number = db.Column(db.String(10), unique=True, nullable=False, index=True)
     owner_id = db.Column(db.String(64), nullable=False)
     status = db.Column(db.String(20), default='WAITING') # WAITING, PLAYING, ENDED
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     version = db.Column(db.Integer, default=1)
 
     game_state = db.relationship('GameState', backref='room', uselist=False, cascade='all, delete-orphan')
@@ -48,6 +51,8 @@ class GameState(db.Model):
     players = db.Column(JSON)          # List of openids in order
     votes = db.Column(JSON)            # Dict {openid: vote_value}
     quest_votes = db.Column(JSON)      # List of success/fail (unordered for secrecy)
+    phase_start_time = db.Column(db.DateTime, default=lambda: datetime.now(UTC))  # 阶段开始时间
+    timeout_seconds = db.Column(db.Integer, default=60)  # 超时秒数（默认 60 秒）
 
 class GameHistory(db.Model):
     __tablename__ = 'game_history'
@@ -55,7 +60,7 @@ class GameHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     room_id = db.Column(db.String(32))
     start_time = db.Column(db.DateTime)
-    end_time = db.Column(db.DateTime, default=datetime.utcnow)
+    end_time = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     winner_team = db.Column(db.String(10)) # 'GOOD' or 'EVIL'
     players = db.Column(JSON)
     replay_data = db.Column(JSON)

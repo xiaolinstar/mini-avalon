@@ -1,8 +1,7 @@
-from flask import jsonify, g, request, make_response
-from wechatpy import create_reply
-from src.exceptions.base import BaseGameException, DomainException, ValidationException
+from flask import g, jsonify, make_response
+
+from src.exceptions.base import BaseGameException
 from src.utils.logger import get_logger
-import traceback
 
 logger = get_logger(__name__)
 

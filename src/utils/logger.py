@@ -1,16 +1,28 @@
+import json
 import logging
 import sys
-import json
-from datetime import datetime
+from datetime import UTC, datetime
+
+from flask import g, has_app_context
+
 from src.config.settings import settings
+
+
+class TraceIdFilter(logging.Filter):
+    def filter(self, record):
+        record.trace_id = "n/a"
+        if has_app_context():
+            record.trace_id = getattr(g, "trace_id", "n/a")
+        return True
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
         log_record = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "func": record.funcName,
+            "trace_id": getattr(record, "trace_id", "n/a"),
             "message": record.getMessage(),
         }
         if record.exc_info:
@@ -31,9 +43,10 @@ def get_logger(name: str) -> logging.Logger:
             formatter = JsonFormatter()
         else:
             formatter = logging.Formatter(
-                '[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s'
+                '[%(asctime)s] [%(levelname)s] [%(trace_id)s] [%(name)s] [%(funcName)s] %(message)s'
             )
             
+        handler.addFilter(TraceIdFilter())
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(settings.LOG_LEVEL.upper())
@@ -52,7 +65,8 @@ def setup_logging():
             formatter = JsonFormatter()
         else:
             formatter = logging.Formatter(
-                '[%(asctime)s] [%(levelname)s] [%(name)s] [%(funcName)s] %(message)s'
+                '[%(asctime)s] [%(levelname)s] [%(trace_id)s] [%(name)s] [%(funcName)s] %(message)s'
             )
+        handler.addFilter(TraceIdFilter())
         handler.setFormatter(formatter)
         root_logger.addHandler(handler)

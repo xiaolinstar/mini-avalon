@@ -1,8 +1,8 @@
-import pytest
-from src.services.room_service import room_service
-from src.services.game_service import game_service
-from src.repositories.user_repository import user_repo
 from src.fsm.avalon_fsm import GamePhase
+from src.repositories.user_repository import user_repo
+from src.services.game_service import game_service
+from src.services.room_service import room_service
+
 
 def setup_users(n):
     users = [f"user_{i}" for i in range(1, n + 1)]

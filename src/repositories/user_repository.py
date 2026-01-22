@@ -1,5 +1,5 @@
 from typing import Optional
-from src.extensions.redis_ext import redis_manager
+
 from src.app_factory import db
 from src.models.sql_models import User
 from src.utils.logger import get_logger
@@ -15,7 +15,7 @@ class UserRepository:
     CACHE_PREFIX = "cache:user:"
     CACHE_TTL = 86400  # 24 hours
 
-    def get_by_openid(self, openid: str) -> Optional[User]:
+    def get_by_openid(self, openid: str) -> User | None:
         # Implementation of cache-aside for User
         user = User.query.filter_by(openid=openid).first()
         return user
@@ -28,7 +28,7 @@ class UserRepository:
         return None
 
 
-    def create_or_update(self, openid: str, nickname: Optional[str] = None) -> User:
+    def create_or_update(self, openid: str, nickname: str | None = None) -> User:
         user = self.get_by_openid(openid)
         if not user:
             user = User(openid=openid, nickname=nickname)

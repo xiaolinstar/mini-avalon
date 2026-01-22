@@ -1,11 +1,12 @@
 import random
 import string
-from typing import Tuple, Dict, Any
+from datetime import UTC
+
 from src.app_factory import db
-from src.models.sql_models import Room, GameState, User
+from src.exceptions.room import RoomFullError, RoomNotFoundError, RoomStateError
+from src.models.sql_models import GameState, Room, User
 from src.repositories.room_repository import room_repo
 from src.repositories.user_repository import user_repo
-from src.exceptions.room import RoomNotFoundError, RoomFullError, RoomStateError
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -80,13 +81,12 @@ class RoomService:
 
     def cleanup_stale_rooms(self, hours: int = 2):
         from datetime import datetime, timedelta
-        threshold = datetime.utcnow() - timedelta(hours=hours)
+        threshold = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=hours)
         
         stale_rooms = Room.query.filter(Room.updated_at < threshold).all()
         count = len(stale_rooms)
         for room in stale_rooms:
             # Clear user current_room_id
-            from src.models.sql_models import User
             User.query.filter_by(current_room_id=room.id).update({"current_room_id": None})
             room_repo.delete(room)
             

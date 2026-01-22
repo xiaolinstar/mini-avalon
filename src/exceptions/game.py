@@ -1,5 +1,6 @@
 from .base import DomainException
 
+
 class GameException(DomainException):
     pass
 

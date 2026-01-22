@@ -1,6 +1,7 @@
-import pytest
 import os
 import sys
+
+import pytest
 
 # 将 src 加入路径，方便导入
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -11,8 +12,9 @@ os.environ["APP_ENV"] = "test"
 @pytest.fixture
 def app():
     """Create and configure a new app instance for each test."""
-    from src.app_factory import create_app, db
     from unittest import mock
+
+    from src.app_factory import create_app, db
     
     # Mock redis_client before app creation
     with mock.patch('src.extensions.redis_ext.Redis.from_url') as mock_from_url:
@@ -33,6 +35,7 @@ def app():
             yield app
             db.session.remove()
             db.drop_all()
+            db.engine.dispose()
 
 @pytest.fixture
 def client(app):

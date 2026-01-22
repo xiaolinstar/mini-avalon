@@ -1,8 +1,8 @@
-import pytest
-from src.services.room_service import room_service
-from src.services.game_service import game_service
-from src.repositories.user_repository import user_repo
 from src.fsm.avalon_fsm import GamePhase
+from src.repositories.user_repository import user_repo
+from src.services.game_service import game_service
+from src.services.room_service import room_service
+
 
 def test_integration_mini_game_flow(app):
     with app.app_context():

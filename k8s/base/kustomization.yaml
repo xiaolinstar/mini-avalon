@@ -2,3 +2,4 @@ resources:
   - app.yaml
   - redis.yaml
   - mysql.yaml
+  - cleanup-cronjob.yaml

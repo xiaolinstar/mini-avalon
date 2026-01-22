@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from typing import Optional, Dict
+
 
 @dataclass
 class BaseGameException(Exception):
     message: str
     error_code: str
-    details: Optional[Dict] = None
-    cause: Optional[Exception] = None
+    details: dict | None = None
+    cause: Exception | None = None
 
     def __str__(self):
         return f"[{self.error_code}] {self.message}"

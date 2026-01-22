@@ -1,6 +1,5 @@
 from enum import Enum
-from typing import List, Dict, Optional
-from src.exceptions.base import DomainException
+
 
 class GamePhase(Enum):
     WAITING = "WAITING"
@@ -17,7 +16,7 @@ class AvalonFSM:
     """
     
     @staticmethod
-    def get_role_distribution(player_count: int) -> Dict[str, int]:
+    def get_role_distribution(player_count: int) -> dict[str, int]:
         # Standard Avalon distribution (Good vs Evil)
         # 5 players: 3 Good, 2 Evil
         # 6 players: 4 Good, 2 Evil

@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import List, Optional, Any
+
 from pydantic import BaseModel
+
 
 class CommandType(Enum):
     CREATE_ROOM = "create_room"
@@ -18,12 +21,12 @@ class CommandType(Enum):
 
 class Command(BaseModel):
     command_type: CommandType
-    args: List[str] = []
+    args: list[str] = []
     raw_content: str
     user_openid: str
 
     @property
-    def room_id(self) -> Optional[str]:
+    def room_id(self) -> str | None:
         """Convenience helper for commands that include a room ID."""
         if self.command_type == CommandType.JOIN_ROOM and len(self.args) > 0:
             return self.args[0]

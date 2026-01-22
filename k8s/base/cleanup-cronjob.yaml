@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: room-cleanup
+  labels:
+    app: room-cleanup
+spec:
+  # 每天凌晨2点执行清理 (UTC时间，需要根据实际时区调整)
+  schedule: "0 2 * * *"
+  # 并发策略：不允许并发执行
+  concurrencyPolicy: Forbid
+  # 失败重试策略：保留最近3次失败记录
+  failedJobsHistoryLimit: 3
+  # 成功任务保留策略：保留最近1次成功记录
+  successfulJobsHistoryLimit: 1
+  # 任务超时时间：1小时
+  activeDeadlineSeconds: 3600
+  # 如果错过调度，在之后多久内仍然执行（避免永久跳过）
+  startingDeadlineSeconds: 300
+
+  jobTemplate:
+    spec:
+      backoffLimit: 3  # 失败重试3次
+      template:
+        spec:
+          # 重启策略：从不（CronJob的标准配置）
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          containers:
+            - name: cleanup
+              image: avalon-server:latest
+              command: ["python", "scripts/cleanup_rooms.py"]
+              envFrom:
+                - configMapRef:
+                    name: app-config
+                - secretRef:
+                    name: app-secrets
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "256Mi"
+              # 15分钟后强制终止
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          # 如果Pod失败，10秒后重试
+          # 在job级别由backoffLimit控制总重试次数

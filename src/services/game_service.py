@@ -1,9 +1,10 @@
 import random
-from typing import List, Dict, Optional
+from datetime import UTC, datetime
+
+from src.exceptions.room import RoomStateError
+from src.fsm.avalon_fsm import AvalonFSM, GamePhase
 from src.repositories.room_repository import room_repo
 from src.repositories.user_repository import user_repo
-from src.fsm.avalon_fsm import AvalonFSM, GamePhase
-from src.exceptions.room import RoomStateError
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -46,7 +47,7 @@ class GameService:
         logger.info(f"Game started in room {room_number}")
         return room
 
-    def pick_team(self, room_number: str, leader_openid: str, selected_player_indices: List[int]):
+    def pick_team(self, room_number: str, leader_openid: str, selected_player_indices: list[int]):
         room = room_repo.get_by_number(room_number)
         if not room or room.game_state.phase != GamePhase.TEAM_SELECTION.value:
             raise RoomStateError("当前不是组队阶段")
@@ -68,8 +69,10 @@ class GameService:
         room.game_state.current_team = selected_openids
         room.game_state.phase = GamePhase.TEAM_VOTE.value
         room.game_state.votes = {} # Clear old votes
+        room.game_state.phase_start_time = datetime.now(UTC).replace(tzinfo=None)  # 更新超时开始时间
         
         room_repo.update_game_state(room.game_state)
+        logger.info(f"Room {room_number}: Team selection → Vote phase, timeout started")
         return room
 
     def cast_vote(self, room_number: str, user_openid: str, vote_result: str):
@@ -169,6 +172,7 @@ class GameService:
         elif success_count >= 3:
             # Good reached 3 wins -> Assassination Phase
             room.game_state.phase = GamePhase.ASSASSINATION.value
+            room.game_state.phase_start_time = datetime.now(UTC).replace(tzinfo=None)  # 更新超时开始时间
             logger.info("GOOD reached 3 wins. Entering ASSASSINATION phase.")
         else:
             # Next round
@@ -176,6 +180,7 @@ class GameService:
             room.game_state.vote_track = 0
             room.game_state.leader_idx = (room.game_state.leader_idx + 1) % player_count
             room.game_state.phase = GamePhase.TEAM_SELECTION.value
+            room.game_state.phase_start_time = datetime.now(UTC).replace(tzinfo=None)  # 更新超时开始时间
             room.game_state.quest_votes = {} # Reset for next
             
         room_repo.update_game_state(room.game_state)
@@ -213,8 +218,8 @@ class GameService:
         return result_msg
 
     def _archive_game(self, room, winner_team: str):
-        from src.models.sql_models import GameHistory
         from src.app_factory import db
+        from src.models.sql_models import GameHistory
         
         history = GameHistory(
             room_id=str(room.room_number),
@@ -231,7 +236,7 @@ class GameService:
         room_repo.update_game_state(room.game_state)
 
     def get_user_stats(self, openid: str) -> str:
-        from src.models.sql_models import GameHistory, User
+        from src.models.sql_models import GameHistory
         
         user = user_repo.get_by_openid(openid)
         if not user:
@@ -263,8 +268,10 @@ class GameService:
             
             if h.winner_team == ("GOOD" if is_good else "EVIL"):
                 wins += 1
-                if is_good: good_wins += 1
-                else: evil_wins += 1
+                if is_good:
+                    good_wins += 1
+                else:
+                    evil_wins += 1
                 
         win_rate = (wins / total) * 100
         
@@ -272,7 +279,7 @@ class GameService:
             f"【{user.nickname or '玩家'} 的战绩总览】",
             f"总局数: {total}",
             f"总胜率: {win_rate:.1f}%",
-            f"--- 阵营统计 ---",
+            "--- 阵营统计 ---",
             f"好人局: {good_games} (胜 {good_wins})",
             f"坏人局: {evil_games} (胜 {evil_wins})",
         ]
@@ -287,7 +294,8 @@ class GameService:
             # Vote Passed
             room.game_state.phase = GamePhase.QUEST_PERFORM.value
             room.game_state.vote_track = 0
-            logger.info(f"Team vote PASSED in room {room.room_number}")
+            room.game_state.phase_start_time = datetime.now(UTC).replace(tzinfo=None)  # 更新超时开始时间
+            logger.info(f"Team vote PASSED in room {room.room_number}, started quest timeout")
         else:
             # Vote Failed
             room.game_state.vote_track += 1
@@ -300,7 +308,11 @@ class GameService:
                 # Next leader
                 room.game_state.leader_idx = (room.game_state.leader_idx + 1) % len(room.game_state.players)
                 room.game_state.phase = GamePhase.TEAM_SELECTION.value
-                logger.info(f"Team vote FAILED in room {room.room_number}. Next leader idx: {room.game_state.leader_idx}")
+                room.game_state.phase_start_time = datetime.now(UTC).replace(tzinfo=None)  # 更新超时开始时间
+                logger.info(
+                    f"Team vote FAILED in room {room.room_number}. "
+                    f"Next leader idx: {room.game_state.leader_idx}"
+                )
                 
         room_repo.update_game_state(room.game_state)
 
@@ -312,15 +324,15 @@ class GameService:
         info = [f"你的身份是: {role}"]
         
         # Evil roles (common)
-        evil_common = ['MORGANA', 'ASSASSIN', 'MORDRED', 'MINION']
-        # All evil roles including Oberon
-        all_evil_roles = evil_common + ['OBERON']
-        
-        evil_players = [p for p, r in roles.items() if r in all_evil_roles]
-        
-        if role == 'MERLIN':
+        evil_common = ["MORGANA", "ASSASSIN", "MORDRED", "MINION"]
+
+        if role == "MERLIN":
             # Sees all evil EXCEPT Mordred (Oberon IS seen)
-            seen = [p for p, r in roles.items() if r in ['MORGANA', 'ASSASSIN', 'MINION', 'OBERON']]
+            seen = [
+                p
+                for p, r in roles.items()
+                if r in ["MORGANA", "ASSASSIN", "MINION", "OBERON"]
+            ]
             names = [f"【玩家{players.index(p)+1}】" for p in seen]
             info.append(f"你看到的坏人(不含莫德雷德): {' '.join(names) or '无'}")
         elif role == 'PERCIVAL':
@@ -331,7 +343,11 @@ class GameService:
         elif role in evil_common:
             # Evil see each other (except Oberon)
             # Oberon doesn't see them, and they don't see Oberon
-            allies = [p for p, r in roles.items() if r in evil_common and p != user_openid]
+            allies = [
+                p
+                for p, r in roles.items()
+                if r in evil_common and p != user_openid
+            ]
             names = [f"【玩家{players.index(p)+1}】" for p in allies]
             info.append(f"你的坏人盟友(不含奥伯伦): {' '.join(names) or '无'}")
         elif role == 'OBERON':
@@ -339,7 +355,7 @@ class GameService:
             
         return "\n".join(info)
 
-    def _assign_roles(self, players: List[str]) -> Dict[str, str]:
+    def _assign_roles(self, players: list[str]) -> dict[str, str]:
         count = len(players)
         good_count, evil_count = self.fsm.get_role_distribution(count)
         
@@ -353,10 +369,14 @@ class GameService:
         evil_pool += candidates[:evil_count-1]
         
         # Ensure pool matches player count
-        while len(good_pool) > good_count: good_pool.pop()
-        while len(evil_pool) > evil_count: evil_pool.pop()
-        while len(good_pool) < good_count: good_pool.append('LOYAL')
-        while len(evil_pool) < evil_count: evil_pool.append('MINION')
+        while len(good_pool) > good_count:
+            good_pool.pop()
+        while len(evil_pool) > evil_count:
+            evil_pool.pop()
+        while len(good_pool) < good_count:
+            good_pool.append("LOYAL")
+        while len(evil_pool) < evil_count:
+            evil_pool.append("MINION")
             
         all_roles = good_pool + evil_pool
         random.shuffle(all_roles)
