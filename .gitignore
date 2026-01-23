@@ -27,5 +27,5 @@ docker-compose.override.yml
 
 # Project specific
 instance/
-
-docs-undercover/
+# Docs
+docs-avalon/
