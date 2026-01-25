@@ -4,6 +4,6 @@
 from . import sql_models
 
 # Also expose the models directly
-from .sql_models import User, Room, GameState, GameHistory
+from .sql_models import GameHistory, GameState, Room, User
 
 __all__ = ["User", "Room", "GameState", "GameHistory", "sql_models"]
