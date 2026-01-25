@@ -3,7 +3,6 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 from src.config.settings import settings
-from src.models import sql_models  # noqa: F401
 from src.utils.logger import get_logger, setup_logging
 
 # Extensions
@@ -43,6 +42,9 @@ def create_app(config_override=None):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    # Import models to register them with SQLAlchemy
+    from src import models
 
     # 快速失败自检：MySQL
     with app.app_context():

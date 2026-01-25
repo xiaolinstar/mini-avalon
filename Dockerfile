@@ -7,7 +7,7 @@ WORKDIR /app
 # 设置环境变量
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_APP=main:app
+    FLASK_APP=src.main:app
 
 # 安装系统依赖 (如有需要，例如构建工具或数据库客户端)
 # RUN apt-get update && apt-get install -y gcc default-libmysqlclient-dev && rm -rf /var/lib/apt/lists/*
@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 8000
 
 # 启动命令 (使用 gunicorn)
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "main:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "src.main:app"]
