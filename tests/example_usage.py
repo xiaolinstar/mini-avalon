@@ -3,7 +3,7 @@
 展示了如何在代码中使用 ClientException、BizException 和 ServerException
 """
 
-from .base import AppException, ClientException, BizException, ServerException
+from src.exceptions.base import AppException, ClientException, BizException, ServerException
 
 
 # 客户端异常使用示例

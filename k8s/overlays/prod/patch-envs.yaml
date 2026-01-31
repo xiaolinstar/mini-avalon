@@ -5,7 +5,6 @@ metadata:
 data:
   APP_ENV: "prod"
   FLASK_DEBUG: "0"
-  DATABASE_URL: "mysql+pymysql://user:password@mysql-service/avalon_db"
   REDIS_URL: "redis://redis-service:6379/0"
   LOG_LEVEL: "INFO"
   LOG_FORMAT: "JSON"

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-server
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: user
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: password
+            - name: DATABASE_URL
+              value: "mysql+pymysql://$(DB_USER):$(DB_PASS)@mysql-service/avalon_db"

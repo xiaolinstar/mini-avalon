@@ -4,6 +4,9 @@ resources:
   - ingress.yaml
   - secret.yaml
 
+patchesStrategicMerge:
+  - patch-app.yaml
+
 # Replicas can be adjusted here if needed
 # images can be updated here
 images:
